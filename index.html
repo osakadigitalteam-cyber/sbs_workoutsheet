@@ -10,11 +10,11 @@
     body{font-family:system-ui,-apple-system; padding:16px; max-width:640px; margin:0 auto;}
     .card{padding:14px; border:1px solid #ddd; border-radius:12px; margin:12px 0;}
     label{display:block; margin:10px 0 6px;}
-    input{width:100%; font-size:18px; padding:10px; border-radius:10px; border:1px solid #ccc;}
+    input, select{width:100%; font-size:18px; padding:10px; border-radius:10px; border:1px solid #ccc;}
     button{width:100%; font-size:18px; padding:12px; border-radius:12px; border:0; background:#f3f3f3;}
     button:active{transform:scale(0.99);}
     .out{font-size:34px; font-weight:900; margin-top:10px;}
-    .sub{color:#666; font-size:14px; line-height:1.6; margin-top:6px;}
+    .sub{color:#666; font-size:14px; line-height:1.6; margin-top:6px; white-space:pre-line;}
     .warn{color:#b45309;}
     .divider{height:1px;background:#eee;margin:14px 0;}
 
@@ -50,6 +50,29 @@
 
     <div class="row">
       <div>
+        <label>サーバー機種</label>
+        <select id="server_type">
+          <option value="">選択してください</option>
+          <option value="pc_builtin">PC内蔵型サーバー（～100床）</option>
+          <option value="tower">タワー型サーバー（～300床）</option>
+          <option value="rack">ラックマウント型サーバー</option>
+        </select>
+      </div>
+      <div>
+        <label>（導入予定の）病床数</label>
+        <input id="bed_count" type="number" inputmode="numeric" placeholder="例：180" />
+      </div>
+
+      <div>
+        <label>（導入予定の）病棟数</label>
+        <input id="ward_count" type="number" inputmode="numeric" placeholder="例：4" />
+      </div>
+      <div>
+        <label>ステーション端末 台数</label>
+        <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
+      </div>
+
+      <div>
         <label>ベッドサイド端末 台数</label>
         <input id="qty_bedside" type="number" inputmode="numeric" placeholder="例：20" />
       </div>
@@ -62,19 +85,7 @@
         <label>Wi-Fiベッドナビ 台数</label>
         <input id="qty_wifi" type="number" inputmode="numeric" placeholder="例：20" />
       </div>
-      <div>
-        <label>ステーション端末 台数</label>
-        <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
-      </div>
-
-      <div>
-        <label>（導入予定の）病床数</label>
-        <input id="bed_count" type="number" inputmode="numeric" placeholder="例：180" />
-      </div>
-      <div>
-        <label>（導入予定の）病棟数</label>
-        <input id="ward_count" type="number" inputmode="numeric" placeholder="例：4" />
-      </div>
+      <div></div>
     </div>
 
     <button id="calc">計算</button>
@@ -85,7 +96,7 @@
   </div>
 
 <script>
-  // ★新しい /exec URL
+  // ★ /exec URL
   const API_URL = "https://script.google.com/macros/s/AKfycbwNLZ6yn2eq8pRzXOXldBMsk3tgOobcYG0dA7b7ByjubzA5uCV9pCzPJQ6BqVcLPiah/exec";
 
   function yen(n){
@@ -137,6 +148,7 @@
         pin: s("pin"),
         hospital_name: s("hospital_name"),
         owner_name: s("owner_name"),
+        server_type: s("server_type"),      // ★追加
         qty_bedside: v("qty_bedside"),
         qty_sleep: v("qty_sleep"),
         qty_wifi: v("qty_wifi"),
@@ -157,11 +169,19 @@
       }
 
       document.getElementById("out").textContent = data.total_yen || yen(data.total);
-      document.getElementById("breakdown").textContent =
-        "機器: " + yen(data.hw_total) + " / サーバ: " + yen(data.server_cost) + " / 構築: " + yen(data.build_cost);
 
-      document.getElementById("note").textContent =
-        data.scope_note || "※ 他システム連携（HIS/NC等）は範囲外：別途見積";
+      const perBed = data.price_per_bed_yen || yen(data.price_per_bed);
+      const serverLabel = data.server_type_label ? `（${data.server_type_label}）` : "";
+
+      document.getElementById("breakdown").textContent =
+        "機器: " + yen(data.hw_total) +
+        " / サーバ: " + yen(data.server_cost) +
+        " / 構築: " + yen(data.build_cost) +
+        " / 1床あたり: " + perBed +
+        serverLabel;
+
+      document.getElementById("note").textContent = data.note_text || "";
+
     }catch(e){
       document.getElementById("out").textContent = "通信エラー";
       document.getElementById("breakdown").textContent = String(e);
