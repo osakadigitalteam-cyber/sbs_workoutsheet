@@ -58,6 +58,7 @@
           <option value="rack">ラックマウント型サーバー</option>
         </select>
       </div>
+
       <div>
         <label>（導入予定の）病床数</label>
         <input id="bed_count" type="number" inputmode="numeric" placeholder="例：180" />
@@ -67,6 +68,7 @@
         <label>（導入予定の）病棟数</label>
         <input id="ward_count" type="number" inputmode="numeric" placeholder="例：4" />
       </div>
+
       <div>
         <label>ステーション端末 台数</label>
         <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
@@ -76,6 +78,7 @@
         <label>ベッドサイド端末 台数</label>
         <input id="qty_bedside" type="number" inputmode="numeric" placeholder="例：20" />
       </div>
+
       <div>
         <label>眠りSCAN 台数</label>
         <input id="qty_sleep" type="number" inputmode="numeric" placeholder="例：20" />
@@ -85,6 +88,7 @@
         <label>Wi-Fiベッドナビ 台数</label>
         <input id="qty_wifi" type="number" inputmode="numeric" placeholder="例：20" />
       </div>
+
       <div></div>
     </div>
 
@@ -96,7 +100,7 @@
   </div>
 
 <script>
-  // ★ /exec URL
+  // ★ /exec URL（あなたの最新を使う）
   const API_URL = "https://script.google.com/macros/s/AKfycbwNLZ6yn2eq8pRzXOXldBMsk3tgOobcYG0dA7b7ByjubzA5uCV9pCzPJQ6BqVcLPiah/exec";
 
   function yen(n){
@@ -148,7 +152,7 @@
         pin: s("pin"),
         hospital_name: s("hospital_name"),
         owner_name: s("owner_name"),
-        server_type: s("server_type"),      // ★追加
+        server_type: s("server_type"),
         qty_bedside: v("qty_bedside"),
         qty_sleep: v("qty_sleep"),
         qty_wifi: v("qty_wifi"),
@@ -180,6 +184,7 @@
         " / 1床あたり: " + perBed +
         serverLabel;
 
+      // 備考（長文）
       document.getElementById("note").textContent = data.note_text || "";
 
     }catch(e){
