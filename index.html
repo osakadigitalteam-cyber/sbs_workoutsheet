@@ -28,13 +28,11 @@
   <h1>sbs-worksheet（自社範囲）</h1>
 
   <div class="card">
-    <!-- PINを先に -->
     <label>PIN</label>
     <input id="pin" type="password" inputmode="numeric" placeholder="例：1234" />
 
     <div class="divider"></div>
 
-    <!-- 病院名・担当者をPINの下に -->
     <div class="row">
       <div>
         <label>病院名</label>
@@ -100,7 +98,7 @@
   </div>
 
 <script>
-  // ★ /exec URL（あなたの最新を使う）
+  // ★ /exec URL（あなたの最新URL）
   const API_URL = "https://script.google.com/macros/s/AKfycbwNLZ6yn2eq8pRzXOXldBMsk3tgOobcYG0dA7b7ByjubzA5uCV9pCzPJQ6BqVcLPiah/exec";
 
   function yen(n){
@@ -145,6 +143,14 @@
       document.getElementById("breakdown").textContent = "";
       document.getElementById("note").textContent = "";
 
+      // フロントでも必須チェック（事故防止）
+      const st = s("server_type");
+      if(!st){
+        document.getElementById("out").textContent = "エラー";
+        document.getElementById("breakdown").textContent = "サーバー機種を選択してください";
+        return;
+      }
+
       const cb = "cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
 
       const params = new URLSearchParams({
@@ -152,13 +158,16 @@
         pin: s("pin"),
         hospital_name: s("hospital_name"),
         owner_name: s("owner_name"),
-        server_type: s("server_type"),
+        server_type: st,
+
         qty_bedside: v("qty_bedside"),
         qty_sleep: v("qty_sleep"),
         qty_wifi: v("qty_wifi"),
         qty_station: v("qty_station"),
+
         bed_count: v("bed_count"),
         ward_count: v("ward_count"),
+
         _: String(Date.now())
       });
 
@@ -184,8 +193,10 @@
         " / 1床あたり: " + perBed +
         serverLabel;
 
-      // 備考（長文）
-      document.getElementById("note").textContent = data.note_text || "";
+      // 説明文（server_description）＋備考文（note_text）
+      const desc = data.server_description || "";
+      const note = data.note_text || "";
+      document.getElementById("note").textContent = (desc ? desc + "\n\n" : "") + note;
 
     }catch(e){
       document.getElementById("out").textContent = "通信エラー";
