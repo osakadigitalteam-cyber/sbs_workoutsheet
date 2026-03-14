@@ -87,7 +87,15 @@
         <input id="qty_wifi" type="number" inputmode="numeric" placeholder="例：20" />
       </div>
 
-      <div></div>
+      <div>
+        <label>ネットワークカメラ 台数</label>
+        <input id="qty_camera" type="number" inputmode="numeric" placeholder="例：4" />
+      </div>
+
+      <div>
+        <label>モバイル端末 台数</label>
+        <input id="qty_mobile" type="number" inputmode="numeric" placeholder="例：10" />
+      </div>
     </div>
 
     <button id="calc">計算</button>
@@ -164,6 +172,8 @@
         qty_sleep: v("qty_sleep"),
         qty_wifi: v("qty_wifi"),
         qty_station: v("qty_station"),
+        qty_camera: v("qty_camera"),
+        qty_mobile: v("qty_mobile"),
 
         bed_count: v("bed_count"),
         ward_count: v("ward_count"),
