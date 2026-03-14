@@ -11,7 +11,7 @@
     body {
       font-family: system-ui, -apple-system, sans-serif;
       padding: 16px;
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
       background: #fafafa;
       color: #222;
@@ -62,6 +62,28 @@
       box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
     }
 
+    .helper-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .helper-btn {
+      width: auto;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #f8f8f8;
+      cursor: pointer;
+    }
+
+    .helper-btn:hover {
+      background: #efefef;
+    }
+
     .button-wrap {
       margin-top: 32px;
     }
@@ -82,7 +104,8 @@
       background: #e9e9e9;
     }
 
-    button:active {
+    button:active,
+    .helper-btn:active {
       transform: scale(0.99);
     }
 
@@ -127,6 +150,47 @@
       padding-top: 6px;
     }
 
+    .detail-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      background: #fcfcfc;
+    }
+
+    .detail-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 8px;
+    }
+
+    .detail-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 6px 0;
+      border-bottom: 1px dashed #eee;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .detail-line:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-name {
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    .detail-value {
+      color: #111;
+      font-weight: 700;
+      text-align: right;
+      white-space: nowrap;
+    }
+
     @media (max-width: 520px) {
       .row {
         grid-template-columns: 1fr;
@@ -150,6 +214,17 @@
 
       .button-wrap {
         margin-top: 28px;
+      }
+
+      .detail-line {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .detail-value {
+        text-align: left;
+        white-space: normal;
       }
     }
   </style>
@@ -206,6 +281,11 @@
       </div>
     </div>
 
+    <div class="helper-row">
+      <button type="button" class="helper-btn" id="fill-standard">病床数を端末台数に反映</button>
+      <button type="button" class="helper-btn" id="clear-qty">数量欄をクリア</button>
+    </div>
+
     <div class="divider"></div>
 
     <div class="section-title">機器台数</div>
@@ -243,16 +323,36 @@
     <div class="result-box">
       <div class="out" id="out">-</div>
       <div class="sub" id="breakdown"></div>
+
+      <div class="detail-box" id="detail-box" style="display:none;">
+        <div class="detail-title">機器内訳</div>
+        <div id="detail-lines"></div>
+      </div>
+
       <div class="sub warn" id="note"></div>
     </div>
   </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycby8UMmGlMCm1rPLZV7SXs4z1oW4RVsH7GQPpmIGWU4ec1CGA5iFmpRyVueIGXvEvb2W/exec";
+
+  const LABELS = {
+    qty_bedside: "ベッドサイド端末",
+    qty_sleep: "眠りSCAN",
+    qty_wifi: "Wi-Fiベッドナビ",
+    qty_camera: "ネットワークカメラ",
+    qty_mobile: "モバイル端末",
+    qty_station: "ステーション端末"
+  };
 
   function yen(n) {
     const x = Number(n || 0);
     return x.toLocaleString("ja-JP") + " 円";
+  }
+
+  function toNum(v) {
+    const x = Number(v);
+    return Number.isFinite(x) ? x : 0;
   }
 
   function v(id) {
@@ -261,6 +361,10 @@
 
   function s(id) {
     return String(document.getElementById(id).value || "").trim();
+  }
+
+  function getQty(id) {
+    return toNum(document.getElementById(id).value || 0);
   }
 
   function jsonp(url, callbackName, timeoutMs = 20000) {
@@ -296,6 +400,86 @@
     });
   }
 
+  function renderDetails(prices) {
+    const box = document.getElementById("detail-box");
+    const container = document.getElementById("detail-lines");
+
+    if (!prices) {
+      box.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    const priceMap = {
+      qty_bedside: prices.bedside_terminal || 0,
+      qty_sleep: prices.sleep_scan || 0,
+      qty_wifi: prices.wifi_bed_navi || 0,
+      qty_camera: prices.network_camera || 0,
+      qty_mobile: prices.mobile_terminal || 0,
+      qty_station: prices.station_terminal || 0
+    };
+
+    const ids = ["qty_bedside", "qty_sleep", "qty_wifi", "qty_camera", "qty_mobile", "qty_station"];
+    const lines = [];
+
+    for (const id of ids) {
+      const qty = getQty(id);
+      if (qty <= 0) continue;
+
+      const amount = qty * (priceMap[id] || 0);
+      lines.push({
+        name: `${LABELS[id]}　${qty}台`,
+        amount
+      });
+    }
+
+    if (lines.length === 0) {
+      box.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    const total = lines.reduce((sum, item) => sum + item.amount, 0);
+
+    let html = "";
+    for (const item of lines) {
+      html += `
+        <div class="detail-line">
+          <div class="detail-name">${item.name}</div>
+          <div class="detail-value">${yen(item.amount)}</div>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="detail-line">
+        <div class="detail-name"><strong>機器合計</strong></div>
+        <div class="detail-value"><strong>${yen(total)}</strong></div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    box.style.display = "block";
+  }
+
+  function fillStandardByBeds() {
+    const beds = toNum(document.getElementById("bed_count").value || 0);
+    if (beds <= 0) return;
+
+    document.getElementById("qty_bedside").value = beds;
+    document.getElementById("qty_sleep").value = beds;
+    document.getElementById("qty_wifi").value = beds;
+  }
+
+  function clearQuantities() {
+    const ids = ["qty_station", "qty_bedside", "qty_sleep", "qty_wifi", "qty_camera", "qty_mobile"];
+    for (const id of ids) {
+      document.getElementById(id).value = "";
+    }
+    document.getElementById("detail-box").style.display = "none";
+    document.getElementById("detail-lines").innerHTML = "";
+  }
+
   async function calc() {
     try {
       document.getElementById("out").textContent = "計算中…";
@@ -306,6 +490,7 @@
       if (!st) {
         document.getElementById("out").textContent = "エラー";
         document.getElementById("breakdown").textContent = "サーバー機種を選択してください";
+        document.getElementById("detail-box").style.display = "none";
         return;
       }
 
@@ -338,6 +523,7 @@
         document.getElementById("out").textContent = "エラー";
         document.getElementById("breakdown").textContent = data.error || "失敗しました";
         document.getElementById("note").textContent = "";
+        document.getElementById("detail-box").style.display = "none";
         return;
       }
 
@@ -357,14 +543,19 @@
       const note = data.note_text || "";
       document.getElementById("note").textContent = (desc ? desc + "\n\n" : "") + note;
 
+      renderDetails(data.unit_prices);
+
     } catch (e) {
       document.getElementById("out").textContent = "通信エラー";
       document.getElementById("breakdown").textContent = String(e);
       document.getElementById("note").textContent = "";
+      document.getElementById("detail-box").style.display = "none";
     }
   }
 
   document.getElementById("calc").addEventListener("click", calc);
+  document.getElementById("fill-standard").addEventListener("click", fillStandardByBeds);
+  document.getElementById("clear-qty").addEventListener("click", clearQuantities);
 </script>
 </body>
 </html>
