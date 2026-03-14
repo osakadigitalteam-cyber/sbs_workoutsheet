@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <title>sbs-workoutsheet（自社範囲）</title>
+  <title>sbs-worksheet（自社範囲）</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -62,6 +62,10 @@
       box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
     }
 
+    .button-wrap {
+      margin-top: 32px;
+    }
+
     button {
       width: 100%;
       font-size: 19px;
@@ -70,8 +74,8 @@
       border-radius: 12px;
       border: 0;
       background: #f3f3f3;
-      margin-top: 24px;
       cursor: pointer;
+      display: block;
     }
 
     button:hover {
@@ -143,6 +147,10 @@
       .out {
         font-size: 30px;
       }
+
+      .button-wrap {
+        margin-top: 28px;
+      }
     }
   </style>
 </head>
@@ -183,7 +191,7 @@
       </div>
 
       <div>
-        <label for="bed_count">（導入予定の）病床数</label>
+        <label for="bed_count">総病床数</label>
         <input id="bed_count" type="number" inputmode="numeric" placeholder="例：180" />
       </div>
 
@@ -228,9 +236,9 @@
       </div>
     </div>
 
-    <div class="divider"></div>
-
-    <button id="calc">計算</button>
+    <div class="button-wrap">
+      <button id="calc">計算</button>
+    </div>
 
     <div class="result-box">
       <div class="out" id="out">-</div>
