@@ -62,28 +62,6 @@
       box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
     }
 
-    .helper-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    .helper-btn {
-      width: auto;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      background: #f8f8f8;
-      cursor: pointer;
-    }
-
-    .helper-btn:hover {
-      background: #efefef;
-    }
-
     .button-wrap {
       margin-top: 32px;
     }
@@ -104,8 +82,7 @@
       background: #e9e9e9;
     }
 
-    button:active,
-    .helper-btn:active {
+    button:active {
       transform: scale(0.99);
     }
 
@@ -279,11 +256,6 @@
         <label for="qty_station">ステーション端末 台数</label>
         <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
       </div>
-    </div>
-
-    <div class="helper-row">
-      <button type="button" class="helper-btn" id="fill-standard">病床数を端末台数に反映</button>
-      <button type="button" class="helper-btn" id="clear-qty">数量欄をクリア</button>
     </div>
 
     <div class="divider"></div>
@@ -462,24 +434,6 @@
     box.style.display = "block";
   }
 
-  function fillStandardByBeds() {
-    const beds = toNum(document.getElementById("bed_count").value || 0);
-    if (beds <= 0) return;
-
-    document.getElementById("qty_bedside").value = beds;
-    document.getElementById("qty_sleep").value = beds;
-    document.getElementById("qty_wifi").value = beds;
-  }
-
-  function clearQuantities() {
-    const ids = ["qty_station", "qty_bedside", "qty_sleep", "qty_wifi", "qty_camera", "qty_mobile"];
-    for (const id of ids) {
-      document.getElementById(id).value = "";
-    }
-    document.getElementById("detail-box").style.display = "none";
-    document.getElementById("detail-lines").innerHTML = "";
-  }
-
   async function calc() {
     try {
       document.getElementById("out").textContent = "計算中…";
@@ -554,8 +508,6 @@
   }
 
   document.getElementById("calc").addEventListener("click", calc);
-  document.getElementById("fill-standard").addEventListener("click", fillStandardByBeds);
-  document.getElementById("clear-qty").addEventListener("click", clearQuantities);
 </script>
 </body>
 </html>
