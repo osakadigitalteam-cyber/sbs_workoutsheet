@@ -16,6 +16,7 @@
       --muted: #6b7280;
       --soft: #f9fafb;
       --accent: #111827;
+      --subaccent: #2563eb;
       --warn: #b45309;
       --shadow: 0 6px 20px rgba(0,0,0,0.05);
       --radius: 16px;
@@ -84,7 +85,8 @@
     }
 
     input,
-    select {
+    select,
+    textarea {
       width: 100%;
       padding: 12px 13px;
       border: 1px solid #d1d5db;
@@ -94,8 +96,17 @@
       color: var(--text);
     }
 
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+    }
+
     input:focus,
-    select:focus {
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: #9ca3af;
       box-shadow: 0 0 0 4px rgba(17,24,39,0.06);
@@ -109,6 +120,10 @@
 
     .button-wrap {
       margin-top: 24px;
+    }
+
+    .button-subwrap {
+      margin-top: 10px;
     }
 
     button {
@@ -130,6 +145,10 @@
 
     button:active {
       transform: scale(0.99);
+    }
+
+    .btn-copy {
+      background: var(--subaccent);
     }
 
     .status {
@@ -265,12 +284,6 @@
       color: var(--warn);
     }
 
-    .empty {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
     @media (max-width: 760px) {
       .result-hero,
       .summary-grid,
@@ -340,7 +353,7 @@
     <div class="card">
       <div class="section-title">導入条件</div>
       <div class="row">
-         <div>
+        <div>
           <label for="server_type">サーバー機種</label>
           <select id="server_type">
             <option value="">選択してください</option>
@@ -349,15 +362,17 @@
             <option value="rack">ラックマウント型サーバー</option>
           </select>
         </div>
-        
+
         <div>
           <label for="bed_count">総病床数</label>
           <input id="bed_count" type="number" inputmode="numeric" placeholder="例：180" />
         </div>
+
         <div>
           <label for="ward_count">（導入予定の）病棟数</label>
           <input id="ward_count" type="number" inputmode="numeric" placeholder="例：4" />
         </div>
+
         <div>
           <label for="qty_station">ステーション端末 台数</label>
           <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
@@ -393,6 +408,11 @@
       <div class="button-wrap">
         <button id="calc">計算</button>
       </div>
+
+      <div class="button-subwrap">
+        <button id="copyMail" class="btn-copy">メール用文章をコピー</button>
+      </div>
+
       <div class="status" id="status">入力内容はこのブラウザに自動保存されます。</div>
     </div>
 
@@ -434,11 +454,16 @@
 
       <div class="server-meta warn" id="note" style="display:none;"></div>
     </div>
+
+    <div class="card">
+      <div class="section-title">メール貼り付け用</div>
+      <textarea id="mailText" placeholder="計算後にここへ文章が入ります。"></textarea>
+    </div>
   </div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycby8UMmGlMCm1rPLZV7SXs4z1oW4RVsH7GQPpmIGWU4ec1CGA5iFmpRyVueIGXvEvb2W/exec";
-  const STORAGE_KEY = "sbs_worksheet_v2";
+  const STORAGE_KEY = "sbs_worksheet_v3";
 
   const LABELS = {
     qty_bedside: "ベッドサイド端末",
@@ -463,6 +488,8 @@
     "qty_camera",
     "qty_mobile"
   ];
+
+  let lastCalcData = null;
 
   function yen(n) {
     const x = Number(n || 0);
@@ -559,6 +586,8 @@
     document.getElementById("detail-lines").innerHTML = "";
     document.getElementById("note").style.display = "none";
     document.getElementById("note").textContent = "";
+    document.getElementById("mailText").value = "";
+    lastCalcData = null;
   }
 
   function renderDetails(prices) {
@@ -626,6 +655,63 @@
     box.style.display = "block";
   }
 
+  function buildMailText(data) {
+    const hospital = s("hospital_name");
+    const owner = s("owner_name");
+    const server = data.server_type_label || "";
+
+    const bed = v("bed_count");
+    const ward = v("ward_count");
+
+    const bedside = toNum(v("qty_bedside"));
+    const sleep = toNum(v("qty_sleep"));
+    const wifi = toNum(v("qty_wifi"));
+    const camera = toNum(v("qty_camera"));
+    const mobile = toNum(v("qty_mobile"));
+    const station = toNum(data.station_qty_used || v("qty_station"));
+
+    let text = "";
+
+    text += "スマートベッドシステム 概算\n\n";
+
+    if (hospital) text += "病院名：" + hospital + "\n";
+    if (owner) text += "担当者：" + owner + "\n";
+
+    text += "\n■導入条件\n";
+    text += "サーバー：" + server + "\n";
+    text += "病床数：" + bed + "床\n";
+    text += "病棟数：" + ward + "病棟\n";
+
+    text += "\n■機器構成\n";
+    if (bedside > 0) text += "ベッドサイド端末：" + bedside + "台\n";
+    if (sleep > 0) text += "眠りSCAN：" + sleep + "台\n";
+    if (wifi > 0) text += "Wi-Fiベッドナビ：" + wifi + "台\n";
+    if (camera > 0) text += "ネットワークカメラ：" + camera + "台\n";
+    if (mobile > 0) text += "モバイル端末：" + mobile + "台\n";
+    if (station > 0) text += "ステーション端末：" + station + "台\n";
+
+    text += "\n■概算金額\n";
+    text += "総額：" + (data.total_yen || yen(data.total)) + "\n";
+    text += "1床あたり：" + (data.price_per_bed_yen || yen(data.price_per_bed)) + "\n";
+
+    document.getElementById("mailText").value = text;
+  }
+
+  async function copyMailText() {
+    const text = document.getElementById("mailText").value;
+    if (!text.trim()) {
+      setStatus("先に計算を実行してください。");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus("メール用文章をコピーしました。");
+    } catch (e) {
+      setStatus("コピーに失敗しました。手動でコピーしてください。");
+    }
+  }
+
   async function calc() {
     try {
       setStatus("計算中です…");
@@ -674,6 +760,8 @@
         return;
       }
 
+      lastCalcData = data;
+
       document.getElementById("out").textContent = data.total_yen || yen(data.total);
       document.getElementById("unit-price").textContent = data.price_per_bed_yen || yen(data.price_per_bed);
       document.getElementById("hw-total").textContent = yen(data.hw_total);
@@ -704,6 +792,7 @@
       }
 
       renderDetails(data.unit_prices);
+      buildMailText(data);
       setStatus("計算が完了しました。");
 
     } catch (e) {
@@ -715,6 +804,7 @@
   }
 
   document.getElementById("calc").addEventListener("click", calc);
+  document.getElementById("copyMail").addEventListener("click", copyMailText);
 
   for (const id of FIELD_IDS) {
     document.getElementById(id).addEventListener("input", saveForm);
