@@ -247,7 +247,7 @@
       display: flex;
       justify-content: space-between;
       gap: 16px;
-      padding: 6px 0;
+      padding: 8px 0;
       border-bottom: 1px dashed #eee;
       font-size: 14px;
       line-height: 1.5;
@@ -267,6 +267,14 @@
       font-weight: 700;
       text-align: right;
       white-space: nowrap;
+    }
+
+    .sub-line {
+      display: inline-block;
+      margin-top: 2px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 500;
     }
 
     .warn {
@@ -458,7 +466,7 @@
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
-  const STORAGE_KEY = "sbs_worksheet_v7";
+  const STORAGE_KEY = "sbs_worksheet_v8";
 
   const FIELD_IDS = [
     "pin",
@@ -571,49 +579,70 @@
     document.getElementById("mailText").value = "";
   }
 
+  function getUnitPrices(data) {
+    return (data && data.unit_prices && typeof data.unit_prices === "object")
+      ? data.unit_prices
+      : {};
+  }
+
+  function getHardwareRows(data) {
+    const prices = getUnitPrices(data);
+    const rows = [];
+
+    const stationQty = toNum(data && data.station_qty_used);
+    const stationUnitPrice = toNum(prices.station_terminal);
+    if (stationQty > 0) {
+      rows.push({
+        key: "station",
+        label: "ステーション端末",
+        qty: stationQty,
+        unitPrice: stationUnitPrice,
+        amount: stationQty * stationUnitPrice
+      });
+    }
+
+    const defs = [
+      { id: "qty_bedside", label: "ベッドサイド端末", priceKey: "bedside_terminal" },
+      { id: "qty_sleep", label: "眠りSCAN", priceKey: "sleep_scan" },
+      { id: "qty_wifi", label: "Wi-Fiベッドナビ", priceKey: "wifi_bed_navi" },
+      { id: "qty_camera", label: "ネットワークカメラ", priceKey: "network_camera" },
+      { id: "qty_mobile", label: "モバイル端末", priceKey: "mobile_terminal" }
+    ];
+
+    for (const def of defs) {
+      const qty = toNum(document.getElementById(def.id)?.value || 0);
+      if (qty <= 0) continue;
+
+      const unitPrice = toNum(prices[def.priceKey]);
+      rows.push({
+        key: def.id,
+        label: def.label,
+        qty: qty,
+        unitPrice: unitPrice,
+        amount: qty * unitPrice
+      });
+    }
+
+    return rows;
+  }
+
   function renderDetails(data) {
     const box = document.getElementById("detail-box");
     const container = document.getElementById("detail-lines");
-
-    if (!data || !data.unit_prices) {
-      box.style.display = "none";
-      container.innerHTML = "";
-      return;
-    }
-
-    const prices = data.unit_prices;
     const lines = [];
 
-    if (data.server_type_label) {
+    if (data && data.server_type_label) {
       lines.push({
         name: `サーバー（${data.server_type_label}）　1式`,
         amount: Number(data.server_cost || 0)
       });
     }
 
-    const adjustedStationQty = toNum(data.station_qty_used || 0);
-    if (adjustedStationQty > 0) {
+    const hardwareRows = getHardwareRows(data);
+    for (const row of hardwareRows) {
       lines.push({
-        name: `ステーション端末　${adjustedStationQty}台`,
-        amount: adjustedStationQty * (prices.station_terminal || 0)
-      });
-    }
-
-    const otherItems = [
-      ["qty_bedside", "ベッドサイド端末", prices.bedside_terminal || 0],
-      ["qty_sleep", "眠りSCAN", prices.sleep_scan || 0],
-      ["qty_wifi", "Wi-Fiベッドナビ", prices.wifi_bed_navi || 0],
-      ["qty_camera", "ネットワークカメラ", prices.network_camera || 0],
-      ["qty_mobile", "モバイル端末", prices.mobile_terminal || 0]
-    ];
-
-    for (const [id, label, unitPrice] of otherItems) {
-      const qty = toNum(document.getElementById(id).value || 0);
-      if (qty <= 0) continue;
-
-      lines.push({
-        name: `${label}　${qty}台`,
-        amount: qty * unitPrice
+        name: `${row.label}　${row.qty}台`,
+        amount: row.amount
       });
     }
 
@@ -640,56 +669,25 @@
   function renderHardwareBreakdown(data) {
     const box = document.getElementById("hw-breakdown-box");
     const container = document.getElementById("hw-breakdown-lines");
+    const rows = getHardwareRows(data);
 
-    if (!data || !data.unit_prices) {
+    if (!rows.length) {
       box.style.display = "none";
       container.innerHTML = "";
       return;
     }
 
-    const prices = data.unit_prices;
-    const lines = [];
-
-    const adjustedStationQty = toNum(data.station_qty_used || 0);
-    if (adjustedStationQty > 0) {
-      lines.push({
-        name: `ステーション端末　${adjustedStationQty}台`,
-        amount: adjustedStationQty * (prices.station_terminal || 0)
-      });
-    }
-
-    const hwItems = [
-      ["qty_bedside", "ベッドサイド端末", prices.bedside_terminal || 0],
-      ["qty_sleep", "眠りSCAN", prices.sleep_scan || 0],
-      ["qty_wifi", "Wi-Fiベッドナビ", prices.wifi_bed_navi || 0],
-      ["qty_camera", "ネットワークカメラ", prices.network_camera || 0],
-      ["qty_mobile", "モバイル端末", prices.mobile_terminal || 0]
-    ];
-
-    for (const [id, label, unitPrice] of hwItems) {
-      const qty = toNum(document.getElementById(id).value || 0);
-      if (qty <= 0) continue;
-
-      lines.push({
-        name: `${label}　${qty}台`,
-        amount: qty * unitPrice
-      });
-    }
-
-    if (lines.length === 0) {
-      box.style.display = "none";
-      container.innerHTML = "";
-      return;
-    }
-
-    const total = lines.reduce((sum, item) => sum + item.amount, 0);
+    const total = rows.reduce((sum, row) => sum + row.amount, 0);
 
     let html = "";
-    for (const item of lines) {
+    for (const row of rows) {
       html += `
         <div class="detail-line">
-          <div class="detail-name">${item.name}</div>
-          <div class="detail-value">${yen(item.amount)}</div>
+          <div class="detail-name">
+            ${row.label}
+            <span class="sub-line">数量：${row.qty}台 ／ 単価：${yen(row.unitPrice)}</span>
+          </div>
+          <div class="detail-value">${yen(row.amount)}</div>
         </div>
       `;
     }
@@ -789,17 +787,14 @@
         hospital_name: s("hospital_name"),
         owner_name: s("owner_name"),
         server_type: st,
-
         qty_bedside: v("qty_bedside"),
         qty_sleep: v("qty_sleep"),
         qty_wifi: v("qty_wifi"),
         qty_station: v("qty_station"),
         qty_camera: v("qty_camera"),
         qty_mobile: v("qty_mobile"),
-
         bed_count: v("bed_count"),
         ward_count: v("ward_count"),
-
         _: String(Date.now())
       });
 
