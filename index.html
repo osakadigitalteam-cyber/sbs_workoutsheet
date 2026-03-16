@@ -374,7 +374,7 @@
         </div>
 
         <div>
-          <label for="qty_station">ステーション端末 台数</label>
+          <label for="qty_station">導入予定のステーション端末 台数</label>
           <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
         </div>
       </div>
@@ -448,7 +448,7 @@
       <div class="server-meta" id="server-meta">まだ計算されていません。</div>
 
       <div class="detail-box" id="detail-box" style="display:none;">
-        <div class="detail-head">機器内訳</div>
+        <div class="detail-head">構成内訳</div>
         <div id="detail-lines"></div>
       </div>
 
@@ -462,8 +462,8 @@
   </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycby8UMmGlMCm1rPLZV7SXs4z1oW4RVsH7GQPpmIGWU4ec1CGA5iFmpRyVueIGXvEvb2W/exec";
-  const STORAGE_KEY = "sbs_worksheet_v3";
+  const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
+  const STORAGE_KEY = "sbs_worksheet_v4";
 
   const LABELS = {
     qty_bedside: "ベッドサイド端末",
@@ -489,8 +489,6 @@
     "qty_mobile"
   ];
 
-  let lastCalcData = null;
-
   function yen(n) {
     const x = Number(n || 0);
     return x.toLocaleString("ja-JP") + " 円";
@@ -507,10 +505,6 @@
 
   function s(id) {
     return String(document.getElementById(id).value || "").trim();
-  }
-
-  function getQty(id) {
-    return toNum(document.getElementById(id).value || 0);
   }
 
   function setStatus(text) {
@@ -587,19 +581,19 @@
     document.getElementById("note").style.display = "none";
     document.getElementById("note").textContent = "";
     document.getElementById("mailText").value = "";
-    lastCalcData = null;
   }
 
-  function renderDetails(prices) {
+  function renderDetails(data) {
     const box = document.getElementById("detail-box");
     const container = document.getElementById("detail-lines");
 
-    if (!prices) {
+    if (!data || !data.unit_prices) {
       box.style.display = "none";
       container.innerHTML = "";
       return;
     }
 
+    const prices = data.unit_prices;
     const priceMap = {
       qty_bedside: prices.bedside_terminal || 0,
       qty_sleep: prices.sleep_scan || 0,
@@ -609,18 +603,36 @@
       qty_station: prices.station_terminal || 0
     };
 
-    const ids = ["qty_bedside", "qty_sleep", "qty_wifi", "qty_camera", "qty_mobile", "qty_station"];
     const lines = [];
 
-    for (const id of ids) {
-      const qty = getQty(id);
+    // サーバーを先頭に追加
+    if (data.server_type_label) {
+      lines.push({
+        label: `サーバー（${data.server_type_label}）`,
+        qtyText: "1 式",
+        amount: Number(data.server_cost || 0)
+      });
+    }
+
+    // ステーション端末は補正後の台数を使う
+    const adjustedStationQty = toNum(data.station_qty_used || 0);
+    if (adjustedStationQty > 0) {
+      lines.push({
+        label: LABELS.qty_station,
+        qtyText: `${adjustedStationQty} 台`,
+        amount: adjustedStationQty * (priceMap.qty_station || 0)
+      });
+    }
+
+    const otherIds = ["qty_bedside", "qty_sleep", "qty_wifi", "qty_camera", "qty_mobile"];
+    for (const id of otherIds) {
+      const qty = toNum(document.getElementById(id).value || 0);
       if (qty <= 0) continue;
 
-      const amount = qty * (priceMap[id] || 0);
       lines.push({
         label: LABELS[id],
-        qty: qty,
-        amount: amount
+        qtyText: `${qty} 台`,
+        amount: qty * (priceMap[id] || 0)
       });
     }
 
@@ -637,7 +649,7 @@
       html += `
         <div class="detail-line">
           <div class="detail-name">${item.label}</div>
-          <div class="detail-qty">${item.qty} 台</div>
+          <div class="detail-qty">${item.qtyText}</div>
           <div class="detail-value">${yen(item.amount)}</div>
         </div>
       `;
@@ -645,7 +657,7 @@
 
     html += `
       <div class="detail-line detail-total">
-        <div class="detail-name"><strong>機器合計</strong></div>
+        <div class="detail-name"><strong>構成小計（構築費除く）</strong></div>
         <div class="detail-qty"></div>
         <div class="detail-value"><strong>${yen(total)}</strong></div>
       </div>
@@ -668,7 +680,7 @@
     const wifi = toNum(v("qty_wifi"));
     const camera = toNum(v("qty_camera"));
     const mobile = toNum(v("qty_mobile"));
-    const station = toNum(data.station_qty_used || v("qty_station"));
+    const station = toNum(data.station_qty_used || 0);
 
     let text = "";
 
@@ -683,14 +695,18 @@
     text += "病棟数：" + ward + "病棟\n";
 
     text += "\n■機器構成\n";
+    if (server) text += "サーバー：" + server + " 1式\n";
+    if (station > 0) text += "ステーション端末：" + station + "台\n";
     if (bedside > 0) text += "ベッドサイド端末：" + bedside + "台\n";
     if (sleep > 0) text += "眠りSCAN：" + sleep + "台\n";
     if (wifi > 0) text += "Wi-Fiベッドナビ：" + wifi + "台\n";
     if (camera > 0) text += "ネットワークカメラ：" + camera + "台\n";
     if (mobile > 0) text += "モバイル端末：" + mobile + "台\n";
-    if (station > 0) text += "ステーション端末：" + station + "台\n";
 
     text += "\n■概算金額\n";
+    text += "機器合計：" + yen(data.hw_total) + "\n";
+    text += "サーバー費：" + yen(data.server_cost) + "\n";
+    text += "構築費：" + yen(data.build_cost) + "\n";
     text += "総額：" + (data.total_yen || yen(data.total)) + "\n";
     text += "1床あたり：" + (data.price_per_bed_yen || yen(data.price_per_bed)) + "\n";
 
@@ -760,8 +776,6 @@
         return;
       }
 
-      lastCalcData = data;
-
       document.getElementById("out").textContent = data.total_yen || yen(data.total);
       document.getElementById("unit-price").textContent = data.price_per_bed_yen || yen(data.price_per_bed);
       document.getElementById("hw-total").textContent = yen(data.hw_total);
@@ -771,11 +785,13 @@
       const serverLabel = data.server_type_label || "-";
       const serverTier = data.server_tier || "-";
       const buildTier = data.build_tier || "-";
+      const stationUsed = toNum(data.station_qty_used || 0);
 
       let metaText =
         `サーバー機種：${serverLabel}\n` +
         `サーバーTier：${serverTier}\n` +
-        `構築Tier：${buildTier}`;
+        `構築Tier：${buildTier}\n` +
+        `機器構成上のステーション端末数：${stationUsed} 台`;
 
       if (data.server_description) {
         metaText += `\n\n${data.server_description}`;
@@ -791,7 +807,7 @@
         document.getElementById("note").textContent = "";
       }
 
-      renderDetails(data.unit_prices);
+      renderDetails(data);
       buildMailText(data);
       setStatus("計算が完了しました。");
 
