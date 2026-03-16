@@ -438,7 +438,7 @@
       <div class="server-meta" id="server-meta">まだ計算されていません。</div>
 
       <div class="detail-box" id="detail-box" style="display:none;">
-        <div class="detail-title">機器内訳</div>
+        <div class="detail-title">機器構成</div>
         <div id="detail-lines"></div>
       </div>
 
@@ -453,16 +453,7 @@
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
-  const STORAGE_KEY = "sbs_worksheet_v5";
-
-  const LABELS = {
-    qty_bedside: "ベッドサイド端末",
-    qty_sleep: "眠りSCAN",
-    qty_wifi: "Wi-Fiベッドナビ",
-    qty_camera: "ネットワークカメラ",
-    qty_mobile: "モバイル端末",
-    qty_station: "ステーション端末"
-  };
+  const STORAGE_KEY = "sbs_worksheet_v6";
 
   const FIELD_IDS = [
     "pin",
@@ -596,25 +587,25 @@
     const adjustedStationQty = toNum(data.station_qty_used || 0);
     if (adjustedStationQty > 0) {
       lines.push({
-        name: `${LABELS.qty_station}　${adjustedStationQty}台`,
+        name: `ステーション端末　${adjustedStationQty}台`,
         amount: adjustedStationQty * (prices.station_terminal || 0)
       });
     }
 
     const otherItems = [
-      ["qty_bedside", prices.bedside_terminal || 0],
-      ["qty_sleep", prices.sleep_scan || 0],
-      ["qty_wifi", prices.wifi_bed_navi || 0],
-      ["qty_camera", prices.network_camera || 0],
-      ["qty_mobile", prices.mobile_terminal || 0]
+      ["qty_bedside", "ベッドサイド端末", prices.bedside_terminal || 0],
+      ["qty_sleep", "眠りSCAN", prices.sleep_scan || 0],
+      ["qty_wifi", "Wi-Fiベッドナビ", prices.wifi_bed_navi || 0],
+      ["qty_camera", "ネットワークカメラ", prices.network_camera || 0],
+      ["qty_mobile", "モバイル端末", prices.mobile_terminal || 0]
     ];
 
-    for (const [id, unitPrice] of otherItems) {
+    for (const [id, label, unitPrice] of otherItems) {
       const qty = toNum(document.getElementById(id).value || 0);
       if (qty <= 0) continue;
 
       lines.push({
-        name: `${LABELS[id]}　${qty}台`,
+        name: `${label}　${qty}台`,
         amount: qty * unitPrice
       });
     }
