@@ -442,6 +442,11 @@
         <div id="detail-lines"></div>
       </div>
 
+      <div class="detail-box" id="hw-breakdown-box" style="display:none;">
+        <div class="detail-title">機器合計の内訳</div>
+        <div id="hw-breakdown-lines"></div>
+      </div>
+
       <div class="server-meta warn" id="note" style="display:none;"></div>
     </div>
 
@@ -453,7 +458,7 @@
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
-  const STORAGE_KEY = "sbs_worksheet_v6";
+  const STORAGE_KEY = "sbs_worksheet_v7";
 
   const FIELD_IDS = [
     "pin",
@@ -559,6 +564,8 @@
     document.getElementById("server-meta").textContent = "まだ計算されていません。";
     document.getElementById("detail-box").style.display = "none";
     document.getElementById("detail-lines").innerHTML = "";
+    document.getElementById("hw-breakdown-box").style.display = "none";
+    document.getElementById("hw-breakdown-lines").innerHTML = "";
     document.getElementById("note").style.display = "none";
     document.getElementById("note").textContent = "";
     document.getElementById("mailText").value = "";
@@ -601,6 +608,65 @@
     ];
 
     for (const [id, label, unitPrice] of otherItems) {
+      const qty = toNum(document.getElementById(id).value || 0);
+      if (qty <= 0) continue;
+
+      lines.push({
+        name: `${label}　${qty}台`,
+        amount: qty * unitPrice
+      });
+    }
+
+    if (lines.length === 0) {
+      box.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    let html = "";
+    for (const item of lines) {
+      html += `
+        <div class="detail-line">
+          <div class="detail-name">${item.name}</div>
+          <div class="detail-value">${yen(item.amount)}</div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+    box.style.display = "block";
+  }
+
+  function renderHardwareBreakdown(data) {
+    const box = document.getElementById("hw-breakdown-box");
+    const container = document.getElementById("hw-breakdown-lines");
+
+    if (!data || !data.unit_prices) {
+      box.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    const prices = data.unit_prices;
+    const lines = [];
+
+    const adjustedStationQty = toNum(data.station_qty_used || 0);
+    if (adjustedStationQty > 0) {
+      lines.push({
+        name: `ステーション端末　${adjustedStationQty}台`,
+        amount: adjustedStationQty * (prices.station_terminal || 0)
+      });
+    }
+
+    const hwItems = [
+      ["qty_bedside", "ベッドサイド端末", prices.bedside_terminal || 0],
+      ["qty_sleep", "眠りSCAN", prices.sleep_scan || 0],
+      ["qty_wifi", "Wi-Fiベッドナビ", prices.wifi_bed_navi || 0],
+      ["qty_camera", "ネットワークカメラ", prices.network_camera || 0],
+      ["qty_mobile", "モバイル端末", prices.mobile_terminal || 0]
+    ];
+
+    for (const [id, label, unitPrice] of hwItems) {
       const qty = toNum(document.getElementById(id).value || 0);
       if (qty <= 0) continue;
 
@@ -780,6 +846,7 @@
       }
 
       renderDetails(data);
+      renderHardwareBreakdown(data);
       buildMailText(data);
       setStatus("計算が完了しました。");
 
