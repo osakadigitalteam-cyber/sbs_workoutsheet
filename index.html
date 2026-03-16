@@ -230,29 +230,27 @@
 
     .detail-box {
       margin-top: 14px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: #fff;
-      overflow: hidden;
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      background: #fcfcfc;
     }
 
-    .detail-head {
-      padding: 14px 16px;
-      background: #f9fafb;
-      border-bottom: 1px solid var(--line);
+    .detail-title {
       font-size: 14px;
-      font-weight: 800;
-      color: #374151;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 8px;
     }
 
     .detail-line {
-      display: grid;
-      grid-template-columns: minmax(0,1.2fr) minmax(110px,.6fr) minmax(120px,.7fr);
-      gap: 12px;
-      padding: 12px 16px;
-      border-bottom: 1px dashed #eceff3;
-      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 6px 0;
+      border-bottom: 1px dashed #eee;
       font-size: 14px;
+      line-height: 1.5;
     }
 
     .detail-line:last-child {
@@ -260,24 +258,15 @@
     }
 
     .detail-name {
-      color: #111827;
-      font-weight: 700;
-    }
-
-    .detail-qty {
-      color: var(--muted);
-      text-align: center;
+      color: #333;
+      white-space: pre-wrap;
     }
 
     .detail-value {
+      color: #111;
+      font-weight: 700;
       text-align: right;
-      color: #111827;
-      font-weight: 800;
       white-space: nowrap;
-    }
-
-    .detail-total {
-      background: #fbfbfc;
     }
 
     .warn {
@@ -310,13 +299,14 @@
       }
 
       .detail-line {
-        grid-template-columns: 1fr;
-        gap: 6px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
       }
 
-      .detail-qty,
       .detail-value {
         text-align: left;
+        white-space: normal;
       }
     }
   </style>
@@ -448,7 +438,7 @@
       <div class="server-meta" id="server-meta">まだ計算されていません。</div>
 
       <div class="detail-box" id="detail-box" style="display:none;">
-        <div class="detail-head">構成内訳</div>
+        <div class="detail-title">機器内訳</div>
         <div id="detail-lines"></div>
       </div>
 
@@ -463,7 +453,7 @@
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
-  const STORAGE_KEY = "sbs_worksheet_v4";
+  const STORAGE_KEY = "sbs_worksheet_v5";
 
   const LABELS = {
     qty_bedside: "ベッドサイド端末",
@@ -594,45 +584,38 @@
     }
 
     const prices = data.unit_prices;
-    const priceMap = {
-      qty_bedside: prices.bedside_terminal || 0,
-      qty_sleep: prices.sleep_scan || 0,
-      qty_wifi: prices.wifi_bed_navi || 0,
-      qty_camera: prices.network_camera || 0,
-      qty_mobile: prices.mobile_terminal || 0,
-      qty_station: prices.station_terminal || 0
-    };
-
     const lines = [];
 
-    // サーバーを先頭に追加
     if (data.server_type_label) {
       lines.push({
-        label: `サーバー（${data.server_type_label}）`,
-        qtyText: "1 式",
+        name: `サーバー（${data.server_type_label}）　1式`,
         amount: Number(data.server_cost || 0)
       });
     }
 
-    // ステーション端末は補正後の台数を使う
     const adjustedStationQty = toNum(data.station_qty_used || 0);
     if (adjustedStationQty > 0) {
       lines.push({
-        label: LABELS.qty_station,
-        qtyText: `${adjustedStationQty} 台`,
-        amount: adjustedStationQty * (priceMap.qty_station || 0)
+        name: `${LABELS.qty_station}　${adjustedStationQty}台`,
+        amount: adjustedStationQty * (prices.station_terminal || 0)
       });
     }
 
-    const otherIds = ["qty_bedside", "qty_sleep", "qty_wifi", "qty_camera", "qty_mobile"];
-    for (const id of otherIds) {
+    const otherItems = [
+      ["qty_bedside", prices.bedside_terminal || 0],
+      ["qty_sleep", prices.sleep_scan || 0],
+      ["qty_wifi", prices.wifi_bed_navi || 0],
+      ["qty_camera", prices.network_camera || 0],
+      ["qty_mobile", prices.mobile_terminal || 0]
+    ];
+
+    for (const [id, unitPrice] of otherItems) {
       const qty = toNum(document.getElementById(id).value || 0);
       if (qty <= 0) continue;
 
       lines.push({
-        label: LABELS[id],
-        qtyText: `${qty} 台`,
-        amount: qty * (priceMap[id] || 0)
+        name: `${LABELS[id]}　${qty}台`,
+        amount: qty * unitPrice
       });
     }
 
@@ -648,17 +631,15 @@
     for (const item of lines) {
       html += `
         <div class="detail-line">
-          <div class="detail-name">${item.label}</div>
-          <div class="detail-qty">${item.qtyText}</div>
+          <div class="detail-name">${item.name}</div>
           <div class="detail-value">${yen(item.amount)}</div>
         </div>
       `;
     }
 
     html += `
-      <div class="detail-line detail-total">
-        <div class="detail-name"><strong>構成小計（構築費除く）</strong></div>
-        <div class="detail-qty"></div>
+      <div class="detail-line">
+        <div class="detail-name"><strong>機器合計</strong></div>
         <div class="detail-value"><strong>${yen(total)}</strong></div>
       </div>
     `;
