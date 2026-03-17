@@ -1,821 +1,179 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <title>sbs-worksheet（自社範囲）</title>
-  <style>
-    * { box-sizing: border-box; }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>sbs-worksheet</title>
 
-    :root {
-      --bg: #f6f7f9;
-      --card: #ffffff;
-      --line: #e5e7eb;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --soft: #f9fafb;
-      --accent: #111827;
-      --subaccent: #2563eb;
-      --warn: #b45309;
-      --shadow: 0 6px 20px rgba(0,0,0,0.05);
-      --radius: 16px;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 16px;
-    }
-
-    .wrap {
-      max-width: 860px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      line-height: 1.3;
-      letter-spacing: .02em;
-    }
-
-    .lead {
-      margin: 0 0 18px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 14px;
-    }
-
-    .section-title {
-      margin: 0 0 12px;
-      font-size: 15px;
-      font-weight: 800;
-      color: #374151;
-      letter-spacing: .02em;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-      gap: 14px;
-    }
-
-    .row > div {
-      min-width: 0;
-    }
-
-    label {
-      display: block;
-      margin: 0 0 6px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 12px 13px;
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      font-size: 17px;
-      background: #fff;
-      color: var(--text);
-    }
-
-    textarea {
-      min-height: 220px;
-      resize: vertical;
-      line-height: 1.7;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 14px;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      border-color: #9ca3af;
-      box-shadow: 0 0 0 4px rgba(17,24,39,0.06);
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--line);
-      margin: 16px 0;
-    }
-
-    .button-wrap {
-      margin-top: 24px;
-    }
-
-    .button-subwrap {
-      margin-top: 10px;
-    }
-
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 15px 16px;
-      font-size: 18px;
-      font-weight: 800;
-      background: var(--accent);
-      color: #fff;
-      cursor: pointer;
-      transition: transform .05s ease, opacity .2s ease;
-    }
-
-    button:hover {
-      opacity: 0.95;
-    }
-
-    button:active {
-      transform: scale(0.99);
-    }
-
-    .btn-copy {
-      background: var(--subaccent);
-    }
-
-    .status {
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--muted);
-      min-height: 20px;
-    }
-
-    .result-hero {
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 14px;
-      align-items: stretch;
-    }
-
-    .hero-total,
-    .hero-unit {
-      background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 16px;
-    }
-
-    .hero-label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .hero-value {
-      font-size: 34px;
-      line-height: 1.2;
-      font-weight: 900;
-      letter-spacing: .01em;
-      word-break: break-word;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .summary-card {
-      border: 1px solid var(--line);
-      background: var(--soft);
-      border-radius: 14px;
-      padding: 14px;
-    }
-
-    .summary-card .k {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      font-weight: 700;
-    }
-
-    .summary-card .v {
-      font-size: 22px;
-      font-weight: 800;
-      line-height: 1.3;
-      word-break: break-word;
-    }
-
-    .server-meta {
-      margin-top: 14px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      font-size: 14px;
-      line-height: 1.8;
-      color: #374151;
-      white-space: pre-line;
-    }
-
-    .detail-box {
-      margin-top: 14px;
-      padding: 12px;
-      border: 1px solid #eee;
-      border-radius: 12px;
-      background: #fcfcfc;
-    }
-
-    .detail-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #444;
-      margin-bottom: 8px;
-    }
-
-    .detail-line {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 8px 0;
-      border-bottom: 1px dashed #eee;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .detail-line:last-child {
-      border-bottom: 0;
-    }
-
-    .detail-name {
-      color: #333;
-      white-space: pre-wrap;
-    }
-
-    .detail-value {
-      color: #111;
-      font-weight: 700;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .sub-line {
-      display: inline-block;
-      margin-top: 2px;
-      color: #6b7280;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .warn {
-      color: var(--warn);
-    }
-
-    @media (max-width: 760px) {
-      .result-hero,
-      .summary-grid,
-      .row {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-value {
-        font-size: 30px;
-      }
-    }
-
-    @media (max-width: 520px) {
-      body {
-        padding: 12px;
-      }
-
-      .card {
-        padding: 14px;
-      }
-
-      h1 {
-        font-size: 24px;
-      }
-
-      .detail-line {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-
-      .detail-value {
-        text-align: left;
-        white-space: normal;
-      }
-    }
-  </style>
+<style>
+body{font-family:sans-serif;background:#f5f6f8;margin:0;padding:20px}
+.wrap{max-width:900px;margin:auto}
+.card{background:#fff;padding:16px;border-radius:12px;margin-bottom:12px;border:1px solid #ddd}
+button{width:100%;padding:14px;font-size:16px;background:#111;color:#fff;border:0;border-radius:10px}
+.detail-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #ddd}
+.sub-line{font-size:12px;color:#777}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>sbs-worksheet（自社範囲）</h1>
-    <p class="lead">営業用の概算計算ツールです。単価はスプレッドシートのMasterと連動しています。</p>
+<div class="wrap">
 
-    <div class="card">
-      <div class="section-title">認証・基本情報</div>
+<div class="card">
+<label>ベッドサイド端末</label>
+<input id="qty_bedside" type="number">
 
-      <div class="row">
-        <div>
-          <label for="pin">PIN</label>
-          <input id="pin" type="password" inputmode="numeric" placeholder="例：1234" />
-        </div>
-      </div>
+<label>サーバー</label>
+<select id="server_type">
+<option value="">選択</option>
+<option value="pc_builtin">PC内部</option>
+<option value="tower">タワー</option>
+<option value="rack">ラック</option>
+</select>
 
-      <div class="divider"></div>
+<button id="calc">計算</button>
+<div id="status"></div>
+</div>
 
-      <div class="row">
-        <div>
-          <label for="hospital_name">病院名</label>
-          <input id="hospital_name" type="text" placeholder="例：○○病院" />
-        </div>
-        <div>
-          <label for="owner_name">担当者</label>
-          <input id="owner_name" type="text" placeholder="例：大阪 デジタル" />
-        </div>
-      </div>
-    </div>
+<div class="card">
+<div id="result"></div>
+<div id="breakdown"></div>
+</div>
 
-    <div class="card">
-      <div class="section-title">導入条件</div>
-      <div class="row">
-        <div>
-          <label for="server_type">サーバー機種</label>
-          <select id="server_type">
-            <option value="">選択してください</option>
-            <option value="pc_builtin">PC内部サーバー（～100床）</option>
-            <option value="tower">タワー型サーバー（～300床）</option>
-            <option value="rack">ラックマウント型サーバー</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="bed_count">総病床数</label>
-          <input id="bed_count" type="number" inputmode="numeric" placeholder="例：180" />
-        </div>
-
-        <div>
-          <label for="ward_count">（導入予定の）病棟数</label>
-          <input id="ward_count" type="number" inputmode="numeric" placeholder="例：4" />
-        </div>
-
-        <div>
-          <label for="qty_station">導入予定のステーション端末 台数</label>
-          <input id="qty_station" type="number" inputmode="numeric" placeholder="例：2" />
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="section-title">機器台数</div>
-      <div class="row">
-        <div>
-          <label for="qty_bedside">ベッドサイド端末 台数</label>
-          <input id="qty_bedside" type="number" inputmode="numeric" placeholder="例：20" />
-        </div>
-        <div>
-          <label for="qty_sleep">眠りSCAN 台数</label>
-          <input id="qty_sleep" type="number" inputmode="numeric" placeholder="例：20" />
-        </div>
-        <div>
-          <label for="qty_wifi">Wi-Fiベッドナビ 台数</label>
-          <input id="qty_wifi" type="number" inputmode="numeric" placeholder="例：20" />
-        </div>
-        <div>
-          <label for="qty_camera">ネットワークカメラ 台数</label>
-          <input id="qty_camera" type="number" inputmode="numeric" placeholder="例：4" />
-        </div>
-        <div>
-          <label for="qty_mobile">モバイル端末 台数</label>
-          <input id="qty_mobile" type="number" inputmode="numeric" placeholder="例：10" />
-        </div>
-      </div>
-
-      <div class="button-wrap">
-        <button id="calc">計算</button>
-      </div>
-
-      <div class="button-subwrap">
-        <button id="copyMail" class="btn-copy">メール用文章をコピー</button>
-      </div>
-
-      <div class="status" id="status">入力内容はこのブラウザに自動保存されます。</div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">計算結果</div>
-
-      <div class="result-hero">
-        <div class="hero-total">
-          <div class="hero-label">総額</div>
-          <div class="hero-value" id="out">-</div>
-        </div>
-        <div class="hero-unit">
-          <div class="hero-label">1床あたり</div>
-          <div class="hero-value" id="unit-price">-</div>
-        </div>
-      </div>
-
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="k">機器合計</div>
-          <div class="v" id="hw-total">-</div>
-        </div>
-        <div class="summary-card">
-          <div class="k">サーバー費</div>
-          <div class="v" id="server-cost">-</div>
-        </div>
-        <div class="summary-card">
-          <div class="k">構築費</div>
-          <div class="v" id="build-cost">-</div>
-        </div>
-      </div>
-
-      <div class="server-meta" id="server-meta">まだ計算されていません。</div>
-
-      <div class="detail-box" id="detail-box" style="display:none;">
-        <div class="detail-title">機器構成</div>
-        <div id="detail-lines"></div>
-      </div>
-
-      <div class="detail-box" id="hw-breakdown-box" style="display:none;">
-        <div class="detail-title">機器合計の内訳</div>
-        <div id="hw-breakdown-lines"></div>
-      </div>
-
-      <div class="server-meta warn" id="note" style="display:none;"></div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">メール貼り付け用</div>
-      <textarea id="mailText" placeholder="計算後にここへ文章が入ります。"></textarea>
-    </div>
-  </div>
+</div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbytWUFZxEH1984ckdNRYaS-2eLuIfJyR9vJTDtvnMq5tzH5RIH7jiNtDz5gAUArXb0E/exec";
-  const STORAGE_KEY = "sbs_worksheet_v9";
+const API_URL="https://script.google.com/macros/s/AKfycbytWUFZxEH1984ckdNRYaS-2eLuIfJyR9vJTDtvnMq5tzH5RIH7jiNtDz5gAUArXb0E/exec";
 
-  const FIELD_IDS = [
-    "pin",
-    "hospital_name",
-    "owner_name",
-    "server_type",
-    "bed_count",
-    "ward_count",
-    "qty_station",
-    "qty_bedside",
-    "qty_sleep",
-    "qty_wifi",
-    "qty_camera",
-    "qty_mobile"
-  ];
+function toNum(v){return Number(v)||0;}
+function yen(n){return Number(n).toLocaleString()+" 円";}
 
-  function yen(n) {
-    const x = Number(n || 0);
-    return x.toLocaleString("ja-JP") + " 円";
-  }
+function setStatus(t){
+document.getElementById("status").textContent=t;
+}
 
-  function toNum(v) {
-    const x = Number(v);
-    return Number.isFinite(x) ? x : 0;
-  }
+/* =========================
+  ★ サーバー制限ロジック
+========================= */
+function applyServerRestriction(){
 
-  function v(id) {
-    return String(document.getElementById(id).value || "0");
-  }
+const bedside=toNum(document.getElementById("qty_bedside").value);
+const select=document.getElementById("server_type");
 
-  function s(id) {
-    return String(document.getElementById(id).value || "").trim();
-  }
+const pc=select.querySelector('[value="pc_builtin"]');
+const tower=select.querySelector('[value="tower"]');
+const rack=select.querySelector('[value="rack"]');
 
-  function setStatus(text) {
-    document.getElementById("status").textContent = text;
-  }
+if(bedside>0){
 
-  function saveForm() {
-    const data = {};
-    for (const id of FIELD_IDS) {
-      data[id] = document.getElementById(id).value || "";
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    setStatus("入力内容を保存しました。");
-  }
+pc.disabled=true;
+tower.disabled=true;
+rack.disabled=false;
 
-  function loadForm() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      for (const id of FIELD_IDS) {
-        if (data[id] !== undefined) {
-          document.getElementById(id).value = data[id];
-        }
-      }
-      setStatus("前回の入力内容を読み込みました。");
-    } catch (e) {
-      setStatus("保存データの読み込みに失敗しました。");
-    }
-  }
+if(select.value!=="rack"){
+select.value="rack";
+setStatus("ベッドサイド端末あり → ラックマウントのみ選択可能");
+}
 
-  function jsonp(url, callbackName, timeoutMs = 20000) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error("JSONP timeout"));
-      }, timeoutMs);
+}else{
 
-      function cleanup() {
-        clearTimeout(timer);
-        if (script.parentNode) script.parentNode.removeChild(script);
-        try {
-          delete window[callbackName];
-        } catch (e) {
-          window[callbackName] = undefined;
-        }
-      }
+pc.disabled=false;
+tower.disabled=false;
+rack.disabled=false;
 
-      window[callbackName] = (data) => {
-        cleanup();
-        resolve(data);
-      };
+}
 
-      script.onerror = () => {
-        cleanup();
-        reject(new Error("JSONP script load error"));
-      };
+}
 
-      script.src = url;
-      document.body.appendChild(script);
-    });
-  }
+/* =========================
+  JSONP
+========================= */
+function jsonp(url,cb){
+return new Promise((res,rej)=>{
+window[cb]=(data)=>{delete window[cb];res(data);}
+const s=document.createElement("script");
+s.src=url;
+document.body.appendChild(s);
+});
+}
 
-  function resetResultView() {
-    document.getElementById("out").textContent = "-";
-    document.getElementById("unit-price").textContent = "-";
-    document.getElementById("hw-total").textContent = "-";
-    document.getElementById("server-cost").textContent = "-";
-    document.getElementById("build-cost").textContent = "-";
-    document.getElementById("server-meta").textContent = "まだ計算されていません。";
-    document.getElementById("detail-box").style.display = "none";
-    document.getElementById("detail-lines").innerHTML = "";
-    document.getElementById("hw-breakdown-box").style.display = "none";
-    document.getElementById("hw-breakdown-lines").innerHTML = "";
-    document.getElementById("note").style.display = "none";
-    document.getElementById("note").textContent = "";
-    document.getElementById("mailText").value = "";
-  }
+/* =========================
+  表示
+========================= */
+function render(data){
 
-  function renderDetails(data) {
-    const box = document.getElementById("detail-box");
-    const container = document.getElementById("detail-lines");
-    const lines = [];
+document.getElementById("result").innerHTML=
+"総額："+yen(data.total)+"<br>機器合計："+yen(data.hw_total);
 
-    if (data && data.server_type_label) {
-      lines.push({
-        name: `サーバー（${data.server_type_label}）　1式`,
-        amount: Number(data.server_cost || 0)
-      });
-    }
+const rows=data.hardware_breakdown||[];
 
-    const rows = Array.isArray(data && data.hardware_breakdown)
-      ? data.hardware_breakdown
-      : [];
+let html="";
+let total=0;
 
-    for (const row of rows) {
-      lines.push({
-        name: `${row.label}　${toNum(row.qty)}台`,
-        amount: toNum(row.amount)
-      });
-    }
+rows.forEach(r=>{
+total+=toNum(r.amount);
 
-    if (lines.length === 0) {
-      box.style.display = "none";
-      container.innerHTML = "";
-      return;
-    }
+html+=`
+<div class="detail-line">
+<div>
+${r.label}<br>
+<span class="sub-line">数量:${r.qty} / 単価:${yen(r.unit_price)}</span>
+</div>
+<div>${yen(r.amount)}</div>
+</div>`;
+});
 
-    let html = "";
-    for (const item of lines) {
-      html += `
-        <div class="detail-line">
-          <div class="detail-name">${item.name}</div>
-          <div class="detail-value">${yen(item.amount)}</div>
-        </div>
-      `;
-    }
+html+=`
+<div class="detail-line">
+<div><b>機器合計</b></div>
+<div><b>${yen(total)}</b></div>
+</div>`;
 
-    container.innerHTML = html;
-    box.style.display = "block";
-  }
+document.getElementById("breakdown").innerHTML=html;
 
-  function renderHardwareBreakdown(data) {
-    const box = document.getElementById("hw-breakdown-box");
-    const container = document.getElementById("hw-breakdown-lines");
+}
 
-    const rows = Array.isArray(data && data.hardware_breakdown)
-      ? data.hardware_breakdown
-      : [];
+/* =========================
+  計算
+========================= */
+async function calc(){
 
-    if (!rows.length) {
-      box.style.display = "none";
-      container.innerHTML = "";
-      return;
-    }
+const bedside=toNum(document.getElementById("qty_bedside").value);
+const server=document.getElementById("server_type").value;
 
-    const total = rows.reduce((sum, row) => sum + toNum(row.amount), 0);
+if(bedside>0 && server!=="rack"){
+setStatus("ラックサーバーを選択してください");
+return;
+}
 
-    let html = "";
-    for (const row of rows) {
-      html += `
-        <div class="detail-line">
-          <div class="detail-name">
-            ${row.label}
-            <span class="sub-line">数量：${toNum(row.qty)}台 ／ 単価：${yen(row.unit_price)}</span>
-          </div>
-          <div class="detail-value">${yen(row.amount)}</div>
-        </div>
-      `;
-    }
+const cb="cb"+Date.now();
 
-    html += `
-      <div class="detail-line">
-        <div class="detail-name"><strong>機器合計</strong></div>
-        <div class="detail-value"><strong>${yen(total)}</strong></div>
-      </div>
-    `;
+const url=API_URL+"?callback="+cb
++"&pin=1234"
++"&qty_bedside="+bedside
++"&server_type="+server;
 
-    container.innerHTML = html;
-    box.style.display = "block";
-  }
+const data=await jsonp(url,cb);
 
-  function buildMailText(data) {
-    const hospital = s("hospital_name");
-    const owner = s("owner_name");
-    const server = data.server_type_label || "";
+if(!data.ok){
+setStatus(data.error);
+return;
+}
 
-    const bed = v("bed_count");
-    const ward = v("ward_count");
+render(data);
+setStatus("OK");
 
-    let text = "";
-    text += "スマートベッドシステム 概算\n\n";
+}
 
-    if (hospital) text += "病院名：" + hospital + "\n";
-    if (owner) text += "担当者：" + owner + "\n";
+/* =========================
+  イベント
+========================= */
+document.getElementById("qty_bedside").addEventListener("input",applyServerRestriction);
+document.getElementById("server_type").addEventListener("change",applyServerRestriction);
+document.getElementById("calc").addEventListener("click",calc);
 
-    text += "\n■導入条件\n";
-    text += "サーバー：" + server + "\n";
-    text += "病床数：" + bed + "床\n";
-    text += "病棟数：" + ward + "病棟\n";
+/* 初期実行 */
+applyServerRestriction();
 
-    text += "\n■機器構成\n";
-    if (server) {
-      text += "サーバー：" + server + " 1式\n";
-    }
-
-    const rows = Array.isArray(data && data.hardware_breakdown)
-      ? data.hardware_breakdown
-      : [];
-
-    for (const row of rows) {
-      text += `${row.label}：${toNum(row.qty)}台\n`;
-    }
-
-    text += "\n■概算金額\n";
-    text += "機器合計：" + yen(data.hw_total) + "\n";
-    text += "サーバー費：" + yen(data.server_cost) + "\n";
-    text += "構築費：" + yen(data.build_cost) + "\n";
-    text += "総額：" + (data.total_yen || yen(data.total)) + "\n";
-    text += "1床あたり：" + (data.price_per_bed_yen || yen(data.price_per_bed)) + "\n";
-
-    document.getElementById("mailText").value = text;
-  }
-
-  async function copyMailText() {
-    const text = document.getElementById("mailText").value;
-    if (!text.trim()) {
-      setStatus("先に計算を実行してください。");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setStatus("メール用文章をコピーしました。");
-    } catch (e) {
-      setStatus("コピーに失敗しました。手動でコピーしてください。");
-    }
-  }
-
-  async function calc() {
-    try {
-      setStatus("計算中です…");
-
-      const st = s("server_type");
-      if (!st) {
-        resetResultView();
-        document.getElementById("out").textContent = "エラー";
-        document.getElementById("server-meta").textContent = "サーバー機種を選択してください。";
-        setStatus("入力内容を確認してください。");
-        return;
-      }
-
-      saveForm();
-
-      const cb = "cb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
-
-      const params = new URLSearchParams({
-        callback: cb,
-        pin: s("pin"),
-        hospital_name: s("hospital_name"),
-        owner_name: s("owner_name"),
-        server_type: st,
-        qty_bedside: v("qty_bedside"),
-        qty_sleep: v("qty_sleep"),
-        qty_wifi: v("qty_wifi"),
-        qty_station: v("qty_station"),
-        qty_camera: v("qty_camera"),
-        qty_mobile: v("qty_mobile"),
-        bed_count: v("bed_count"),
-        ward_count: v("ward_count"),
-        _: String(Date.now())
-      });
-
-      const url = API_URL + "?" + params.toString();
-      const data = await jsonp(url, cb);
-
-      if (!data.ok) {
-        resetResultView();
-        document.getElementById("out").textContent = "エラー";
-        document.getElementById("server-meta").textContent = data.error || "失敗しました。";
-        setStatus("エラーが発生しました。");
-        return;
-      }
-
-      document.getElementById("out").textContent = data.total_yen || yen(data.total);
-      document.getElementById("unit-price").textContent = data.price_per_bed_yen || yen(data.price_per_bed);
-      document.getElementById("hw-total").textContent = yen(data.hw_total);
-      document.getElementById("server-cost").textContent = yen(data.server_cost);
-      document.getElementById("build-cost").textContent = yen(data.build_cost);
-
-      const serverLabel = data.server_type_label || "-";
-      const serverTier = data.server_tier || "-";
-      const buildTier = data.build_tier || "-";
-      const stationUsed = toNum(data.station_qty_used || 0);
-
-      let metaText =
-        `サーバー機種：${serverLabel}\n` +
-        `サーバーTier：${serverTier}\n` +
-        `構築Tier：${buildTier}\n` +
-        `機器構成上のステーション端末数：${stationUsed} 台`;
-
-      if (data.server_description) {
-        metaText += `\n\n${data.server_description}`;
-      }
-
-      document.getElementById("server-meta").textContent = metaText;
-
-      if (data.note_text) {
-        document.getElementById("note").textContent = data.note_text;
-        document.getElementById("note").style.display = "block";
-      } else {
-        document.getElementById("note").style.display = "none";
-        document.getElementById("note").textContent = "";
-      }
-
-      renderDetails(data);
-      renderHardwareBreakdown(data);
-      buildMailText(data);
-      setStatus("計算が完了しました。");
-    } catch (e) {
-      resetResultView();
-      document.getElementById("out").textContent = "通信エラー";
-      document.getElementById("server-meta").textContent = String(e);
-      setStatus("通信に失敗しました。");
-    }
-  }
-
-  document.getElementById("calc").addEventListener("click", calc);
-  document.getElementById("copyMail").addEventListener("click", copyMailText);
-
-  for (const id of FIELD_IDS) {
-    document.getElementById(id).addEventListener("input", saveForm);
-    document.getElementById(id).addEventListener("change", saveForm);
-  }
-
-  loadForm();
 </script>
 </body>
 </html>
