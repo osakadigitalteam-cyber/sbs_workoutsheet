@@ -465,8 +465,8 @@
   </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycby2oFNA2mJbPn4GuyYhCFZL0gHsdY53ci428P9FBwpXBfPnVcEIlPLkOR4YA1niwxE/exec";
-  const STORAGE_KEY = "sbs_worksheet_v8";
+  const API_URL = "https://script.google.com/macros/s/AKfycbytWUFZxEH1984ckdNRYaS-2eLuIfJyR9vJTDtvnMq5tzH5RIH7jiNtDz5gAUArXb0E/exec";
+  const STORAGE_KEY = "sbs_worksheet_v9";
 
   const FIELD_IDS = [
     "pin",
@@ -579,53 +579,6 @@
     document.getElementById("mailText").value = "";
   }
 
-  function getUnitPrices(data) {
-    return (data && data.unit_prices && typeof data.unit_prices === "object")
-      ? data.unit_prices
-      : {};
-  }
-
-  function getHardwareRows(data) {
-    const prices = getUnitPrices(data);
-    const rows = [];
-
-    const stationQty = toNum(data && data.station_qty_used);
-    const stationUnitPrice = toNum(prices.station_terminal);
-    if (stationQty > 0) {
-      rows.push({
-        key: "station",
-        label: "ステーション端末",
-        qty: stationQty,
-        unitPrice: stationUnitPrice,
-        amount: stationQty * stationUnitPrice
-      });
-    }
-
-    const defs = [
-      { id: "qty_bedside", label: "ベッドサイド端末", priceKey: "bedside_terminal" },
-      { id: "qty_sleep", label: "眠りSCAN", priceKey: "sleep_scan" },
-      { id: "qty_wifi", label: "Wi-Fiベッドナビ", priceKey: "wifi_bed_navi" },
-      { id: "qty_camera", label: "ネットワークカメラ", priceKey: "network_camera" },
-      { id: "qty_mobile", label: "モバイル端末", priceKey: "mobile_terminal" }
-    ];
-
-    for (const def of defs) {
-      const qty = toNum(document.getElementById(def.id)?.value || 0);
-      if (qty <= 0) continue;
-
-      const unitPrice = toNum(prices[def.priceKey]);
-      rows.push({
-        key: def.id,
-        label: def.label,
-        qty: qty,
-        unitPrice: unitPrice,
-        amount: qty * unitPrice
-      });
-    }
-
-    return rows;
-  }
-
   function renderDetails(data) {
     const box = document.getElementById("detail-box");
     const container = document.getElementById("detail-lines");
@@ -638,11 +591,14 @@
       });
     }
 
-    const hardwareRows = getHardwareRows(data);
-    for (const row of hardwareRows) {
+    const rows = Array.isArray(data && data.hardware_breakdown)
+      ? data.hardware_breakdown
+      : [];
+
+    for (const row of rows) {
       lines.push({
-        name: `${row.label}　${row.qty}台`,
-        amount: row.amount
+        name: `${row.label}　${toNum(row.qty)}台`,
+        amount: toNum(row.amount)
       });
     }
 
@@ -669,7 +625,10 @@
   function renderHardwareBreakdown(data) {
     const box = document.getElementById("hw-breakdown-box");
     const container = document.getElementById("hw-breakdown-lines");
-    const rows = getHardwareRows(data);
+
+    const rows = Array.isArray(data && data.hardware_breakdown)
+      ? data.hardware_breakdown
+      : [];
 
     if (!rows.length) {
       box.style.display = "none";
@@ -677,7 +636,7 @@
       return;
     }
 
-    const total = rows.reduce((sum, row) => sum + row.amount, 0);
+    const total = rows.reduce((sum, row) => sum + toNum(row.amount), 0);
 
     let html = "";
     for (const row of rows) {
@@ -685,7 +644,7 @@
         <div class="detail-line">
           <div class="detail-name">
             ${row.label}
-            <span class="sub-line">数量：${row.qty}台 ／ 単価：${yen(row.unitPrice)}</span>
+            <span class="sub-line">数量：${toNum(row.qty)}台 ／ 単価：${yen(row.unit_price)}</span>
           </div>
           <div class="detail-value">${yen(row.amount)}</div>
         </div>
@@ -711,15 +670,7 @@
     const bed = v("bed_count");
     const ward = v("ward_count");
 
-    const bedside = toNum(v("qty_bedside"));
-    const sleep = toNum(v("qty_sleep"));
-    const wifi = toNum(v("qty_wifi"));
-    const camera = toNum(v("qty_camera"));
-    const mobile = toNum(v("qty_mobile"));
-    const station = toNum(data.station_qty_used || 0);
-
     let text = "";
-
     text += "スマートベッドシステム 概算\n\n";
 
     if (hospital) text += "病院名：" + hospital + "\n";
@@ -731,13 +682,17 @@
     text += "病棟数：" + ward + "病棟\n";
 
     text += "\n■機器構成\n";
-    if (server) text += "サーバー：" + server + " 1式\n";
-    if (station > 0) text += "ステーション端末：" + station + "台\n";
-    if (bedside > 0) text += "ベッドサイド端末：" + bedside + "台\n";
-    if (sleep > 0) text += "眠りSCAN：" + sleep + "台\n";
-    if (wifi > 0) text += "Wi-Fiベッドナビ：" + wifi + "台\n";
-    if (camera > 0) text += "ネットワークカメラ：" + camera + "台\n";
-    if (mobile > 0) text += "モバイル端末：" + mobile + "台\n";
+    if (server) {
+      text += "サーバー：" + server + " 1式\n";
+    }
+
+    const rows = Array.isArray(data && data.hardware_breakdown)
+      ? data.hardware_breakdown
+      : [];
+
+    for (const row of rows) {
+      text += `${row.label}：${toNum(row.qty)}台\n`;
+    }
 
     text += "\n■概算金額\n";
     text += "機器合計：" + yen(data.hw_total) + "\n";
@@ -844,7 +799,6 @@
       renderHardwareBreakdown(data);
       buildMailText(data);
       setStatus("計算が完了しました。");
-
     } catch (e) {
       resetResultView();
       document.getElementById("out").textContent = "通信エラー";
